@@ -147,6 +147,26 @@ npm run build
 
 The server tests apply every migration to the disposable `prisma/test.db`, preserve the authentication and academic checks, and test Phase 4/5 draft visibility, conversation membership, financial authorization, overpayment prevention, duplicate payment reference handling, balances, and receipt ownership.
 
+## Development demo accounts
+
+After creating or migrating your local database, create the repeatable local test accounts with:
+
+```bash
+npm run db:deploy
+npm run seed:demo
+```
+
+The seed creates (or safely leaves unchanged) a `GNDU Test Department`, ten students (`student01` through `student10`) and two teachers (`teacher01`, `teacher02`). It is idempotent: rerunning it does not delete users, create duplicates, replace profile data, or replace an existing password. The development-only password for all twelve accounts is `LocalTestPassword!2026`.
+
+| Role | IDs | Usernames |
+| --- | --- | --- |
+| Student | S123–S132 | student01–student10 |
+| Teacher | T001–T002 | teacher01, teacher02 |
+
+The script hashes this password with the same bcrypt policy as the application and never logs it or returns it from an API. These credentials are intentionally public development fixtures and must never be used in production.
+
+Git does not share SQLite data files. Each teammate must copy `server/.env.example` to their own private `server/.env`, configure a unique JWT secret, then run `npm install`, `npm run db:deploy`, `npm run db:generate`, and `npm run seed:demo`. For a deployed database, a deployment operator must configure `DATABASE_URL` and secrets in the deployment environment, apply the forward-only migrations, and run `node server/src/scripts/seed-demo-accounts.js` once with that same environment. Do not run the demo seed against production unless the deployment is explicitly an isolated demonstration environment.
+
 ## Not implemented
 
 Live payment-gateway processing, provider webhooks, email/SMS/push delivery, GNDU-specific fee policies and grading policies, and production deployment are intentionally not included.

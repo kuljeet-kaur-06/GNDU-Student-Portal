@@ -13,6 +13,7 @@
     "db:migrate": "node --env-file=server/.env server/src/scripts/prepare-database.js && node --env-file=server/.env ./node_modules/prisma/build/index.js migrate dev --schema prisma/schema.prisma",
     "db:deploy": "node --env-file=server/.env server/src/scripts/prepare-database.js && node --env-file=server/.env ./node_modules/prisma/build/index.js migrate deploy --schema prisma/schema.prisma",
     "admin:create": "node server/src/scripts/create-admin.js",
+    "seed:demo": "node --env-file=server/.env server/src/scripts/seed-demo-accounts.js",
     "test:server": "DATABASE_URL=file:./test.db node server/src/scripts/prepare-database.js && DATABASE_URL=file:./test.db node ./node_modules/prisma/build/index.js migrate deploy --schema prisma/schema.prisma && NODE_ENV=test DATABASE_URL=file:./test.db node --test server/tests/*.test.js"
   },
   "dependencies": {

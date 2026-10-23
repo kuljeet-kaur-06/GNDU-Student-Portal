@@ -15,6 +15,7 @@ export const portalApi = {
   },
   admin: {
     users: () => apiRequest('/admin/users'),
+    createUser: (user) => apiRequest('/admin/users', { method: 'POST', body: JSON.stringify(user) }),
     departments: () => apiRequest('/admin/departments'),
     createDepartment: (department) => apiRequest('/admin/departments', { method: 'POST', body: JSON.stringify(department) }),
     courses: () => apiRequest('/admin/courses'),
@@ -41,10 +42,6 @@ export const portalApi = {
     history: (conversationId, params = {}) => apiRequest(`/messages/conversations/${conversationId}/messages${new URLSearchParams(params).toString() ? `?${new URLSearchParams(params)}` : ''}`),
     send: (conversationId, content) => apiRequest(`/messages/conversations/${conversationId}/messages`, { method: 'POST', body: JSON.stringify({ content }) }),
     markRead: (conversationId) => apiRequest(`/messages/conversations/${conversationId}/read`, { method: 'POST' }),
-  },
-  users: {
-    create: (role, user) => apiRequest(`/admin/users/${role}`, { method: 'POST', body: JSON.stringify(user) }),
-    deactivate: (id) => apiRequest(`/admin/users/${encodeURIComponent(id)}/deactivate`, { method: 'POST' }),
   },
   fees: {
     list: (params = {}) => apiRequest(`/fees${new URLSearchParams(params).toString() ? `?${new URLSearchParams(params)}` : ''}`),
