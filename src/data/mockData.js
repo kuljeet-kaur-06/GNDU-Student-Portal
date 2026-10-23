@@ -2,7 +2,6 @@ export const demoNotice = 'Demo mode: academic entries below are illustrative an
 
 export const demoUsers = {
   student: { id: 'demo-student', name: 'Aarav Sharma', role: 'student', programme: 'B.Tech Computer Science', department: 'Computer Science', semester: 'Semester 5', studentId: 'DEMO-2026-001', className: 'CSE-5A' },
-  cr: { id: 'demo-cr', name: 'Ishita Kapoor', role: 'cr', programme: 'B.Tech Computer Science', department: 'Computer Science', semester: 'Semester 5', studentId: 'DEMO-2026-002', className: 'CSE-5A' },
   teacher: { id: 'demo-teacher', name: 'Dr. Meera Singh', role: 'teacher', department: 'Computer Science', assignedClasses: ['CSE-5A', 'CSE-5B'] },
   admin: { id: 'demo-admin', name: 'Campus Administrator', role: 'admin' },
 }
