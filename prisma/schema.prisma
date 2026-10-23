@@ -13,6 +13,46 @@ enum Role {
   ADMIN
 }
 
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AudienceScope {
+  INSTITUTION
+  DEPARTMENT
+  COURSE
+}
+
+enum EventCategory {
+  ACADEMIC
+  EXAMINATION
+  HOLIDAY
+  GENERAL
+  DEPARTMENT
+}
+
+enum FeeStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  REVERSED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  RECEIPT_BASED
+}
+
 model Department {
   id          String   @id @default(cuid())
   name        String   @unique
@@ -20,6 +60,8 @@ model Department {
   isActive    Boolean  @default(true)
   users       User[]
   courses     Course[]
+  calendarEvents CalendarEvent[]
+  announcements Announcement[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -42,6 +84,15 @@ model User {
   attendanceRecorded  Attendance[]        @relation("AttendanceRecorder")
   assessmentsCreated Assessment[]        @relation("AssessmentCreator")
   marks              Mark[]
+  calendarEventsCreated CalendarEvent[] @relation("CalendarEventCreator")
+  announcementsCreated Announcement[] @relation("AnnouncementCreator")
+  conversationParticipants ConversationParticipant[]
+  messagesSent       Message[] @relation("MessageSender")
+  feeRecords         FeeRecord[] @relation("FeeStudent")
+  payments           PaymentRecord[] @relation("PaymentStudent")
+  feesCreated        FeeRecord[] @relation("FeeCreator")
+  paymentsRecorded   PaymentRecord[] @relation("PaymentRecorder")
+  paymentsReversed   PaymentRecord[] @relation("PaymentReverser")
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
@@ -62,11 +113,141 @@ model Course {
   teacherAssignments TeacherAssignment[]
   attendance  Attendance[]
   assessments Assessment[]
+  calendarEvents CalendarEvent[]
+  announcements Announcement[]
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
 
   @@index([departmentId])
   @@index([isActive])
+}
+
+model CalendarEvent {
+  id          String            @id @default(cuid())
+  title       String
+  description String?
+  startsAt    DateTime
+  endsAt      DateTime
+  category    EventCategory
+  status      PublicationStatus @default(DRAFT)
+  audience    AudienceScope     @default(INSTITUTION)
+  departmentId String?
+  courseId    String?
+  createdById String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  department  Department?       @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  course      Course?           @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  createdBy   User              @relation("CalendarEventCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([status, startsAt])
+  @@index([audience, departmentId])
+  @@index([courseId])
+}
+
+model Announcement {
+  id          String            @id @default(cuid())
+  title       String
+  content     String
+  status      PublicationStatus @default(DRAFT)
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  audience    AudienceScope     @default(INSTITUTION)
+  departmentId String?
+  courseId    String?
+  createdById String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  department  Department?       @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  course      Course?           @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  createdBy   User              @relation("AnnouncementCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([status, publishedAt])
+  @@index([audience, departmentId])
+  @@index([courseId])
+}
+
+model Conversation {
+  id           String                    @id @default(cuid())
+  directKey    String                    @unique
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime?
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([conversationId, userId])
+  @@index([userId, conversationId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+model FeeRecord {
+  id                String    @id @default(cuid())
+  studentId         String
+  category          String
+  description       String
+  amountDueMinor    Int
+  amountPaidMinor   Int       @default(0)
+  currency          String    @default("INR")
+  dueDate           DateTime?
+  academicPeriod    String?
+  status            FeeStatus @default(UNPAID)
+  administrativeNotes String?
+  createdById       String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  student           User      @relation("FeeStudent", fields: [studentId], references: [id], onDelete: Restrict)
+  createdBy         User      @relation("FeeCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  payments          PaymentRecord[]
+
+  @@index([studentId, status])
+  @@index([dueDate])
+}
+
+model PaymentRecord {
+  id                   String        @id @default(cuid())
+  feeRecordId          String
+  studentId            String
+  amountMinor          Int
+  currency             String
+  method               PaymentMethod
+  status               PaymentStatus @default(CONFIRMED)
+  transactionReference String        @unique
+  receiptNumber        String?       @unique
+  paidAt               DateTime
+  recordedById         String
+  reversedAt           DateTime?
+  reversedById         String?
+  reversalReason       String?
+  createdAt            DateTime      @default(now())
+  feeRecord            FeeRecord     @relation(fields: [feeRecordId], references: [id], onDelete: Restrict)
+  student              User          @relation("PaymentStudent", fields: [studentId], references: [id], onDelete: Restrict)
+  recordedBy           User          @relation("PaymentRecorder", fields: [recordedById], references: [id], onDelete: Restrict)
+  reversedBy           User?         @relation("PaymentReverser", fields: [reversedById], references: [id], onDelete: Restrict)
+
+  @@index([studentId, paidAt])
+  @@index([feeRecordId, status])
 }
 
 model Enrollment {

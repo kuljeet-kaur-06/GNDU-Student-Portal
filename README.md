@@ -5,7 +5,7 @@ This repository now contains two local applications:
 - The existing React/Vite frontend in `src/`.
 - An Express API with Prisma and SQLite for local development in `server/` and `prisma/`.
 
-Authentication, academic administration, attendance and assessment records are backed by the local API and SQLite database. Calendar, messaging, fees, notifications and payment workflows remain future-phase placeholders and must not be treated as live services.
+Authentication, academic administration, attendance, assessments, calendar events, announcements, private messages, fee records and administrator-confirmed offline payments are backed by the local API and SQLite database.
 
 ## Prerequisites
 
@@ -37,10 +37,10 @@ Copy the value printed by the second command into `JWT_SECRET` in `server/.env`.
 
 ## Create the database and initial administrator
 
-Create the SQLite schema and Prisma client:
+Create or advance the SQLite schema and generate the Prisma client. This applies forward-only migrations; it does not reset the database:
 
 ```bash
-npm run db:migrate -- --name init_auth
+npm run db:migrate
 npm run db:generate
 ```
 
@@ -117,6 +117,36 @@ Attendance percentages count recorded `PRESENT`, `LATE` and `EXCUSED` sessions o
 
 `npm run test:server` provisions and migrates `prisma/test.db`, an isolated ignored database. It never alters `prisma/dev.db`.
 
-## Still not implemented
+## Phase 4: calendar, announcements and messages
 
-Calendar events, messaging, fee records and receipts, notifications, payment-gateway integration, GNDU-specific grading policies, production deployment and final cross-feature integration remain future work.
+The calendar reads actual `/api/calendar/events` data. Students receive published events only when their institution, department, or active course enrollment is in scope. Administrators can manage any event. Teachers can create and manage only course-scoped events for courses to which they are actively assigned.
+
+Announcements follow the same publication and audience rules at `/api/announcements`. Draft and archived records cannot be retrieved by students, even by guessing an ID. Use the Calendar and Announcements items in the relevant role workspace to view the data; administrators and authorized teachers can author events and announcements.
+
+Private messages are direct, two-participant conversations at `/api/messages/conversations`. The server permits administrator communication and teacher/student messaging only where the teacher is assigned to one of the student's active courses. Conversation membership is checked for every history, send, and read operation. Message history is paginated.
+
+## Phase 5: fees, offline payments and receipts
+
+Fee amounts and payments are stored as integer minor units (paise for INR), never floats. Only administrators can create/edit fee records or record an offline payment. A confirmed payment requires an institutionally verified reference and cannot exceed the remaining balance. References are unique, balance/status changes occur in one database transaction, and a confirmed payment receives a receipt number. Administrators can reverse a confirmed payment with a recorded reason; the fee balance is recalculated without deleting financial history.
+
+Students can access only their own fee ledger, payments, and printable HTML receipts. A receipt is unavailable after reversal. Teachers have no fee-management permissions.
+
+There is no live online payment gateway configured. The student UI says so explicitly and has no fake checkout or client-side success state. A future provider integration needs provider credentials kept in `server/.env`, server-side confirmation/webhook signature verification, and an idempotent transaction reference before it can create a `CONFIRMED` payment.
+
+To use the finance workflow, an administrator must create student accounts first, then open **Fees** in the admin workspace to create a fee record and record only verified cash, bank-transfer, or receipt-based payments. The returned receipt link can be printed by the student or an administrator.
+
+## Verification
+
+Run the complete verification suite and frontend build:
+
+```bash
+npm run db:generate
+npm run test:server
+npm run build
+```
+
+The server tests apply every migration to the disposable `prisma/test.db`, preserve the authentication and academic checks, and test Phase 4/5 draft visibility, conversation membership, financial authorization, overpayment prevention, duplicate payment reference handling, balances, and receipt ownership.
+
+## Not implemented
+
+Live payment-gateway processing, provider webhooks, email/SMS/push delivery, GNDU-specific fee policies and grading policies, and production deployment are intentionally not included.

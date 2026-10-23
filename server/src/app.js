@@ -5,6 +5,10 @@ import { env, isProduction } from './config/env.js'
 import authRoutes from './routes/auth.js'
 import adminRoutes from './routes/admin.js'
 import academicRoutes from './routes/academic.js'
+import calendarRoutes from './routes/calendar.js'
+import announcementRoutes from './routes/announcements.js'
+import messageRoutes from './routes/messages.js'
+import feeRoutes from './routes/fees.js'
 import { errorHandler, notFound } from './middleware/error-handler.js'
 
 export function createApp() {
@@ -17,12 +21,16 @@ export function createApp() {
     response.setHeader('Referrer-Policy', 'no-referrer')
     next()
   })
-  app.use(cors({ origin: env.frontendOrigin, credentials: true, methods: ['GET', 'POST', 'PUT', 'PATCH'] }))
+  app.use(cors({ origin: env.frontendOrigin, credentials: true, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] }))
   app.use(express.json({ limit: '16kb' }))
   app.use(cookieParser())
   app.get('/api/health', (_request, response) => response.json({ status: 'ok' }))
   app.use('/api/auth', authRoutes)
   app.use('/api/admin', adminRoutes)
+  app.use('/api/calendar', calendarRoutes)
+  app.use('/api/announcements', announcementRoutes)
+  app.use('/api/messages', messageRoutes)
+  app.use('/api', feeRoutes)
   app.use('/api', academicRoutes)
   app.use(notFound)
   app.use(errorHandler)
