@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Icon from './Icons'
 
-export function Brand({ light = false, name = 'CampusOne' }) { return <div className={`brand ${light ? 'brand-light' : ''}`}><span className="brand-mark">G</span><span><strong>{name}</strong><small>GNDU Student Hub</small></span></div> }
+export function Brand({ light = false, name = 'Student Portal' }) { const [logoUnavailable, setLogoUnavailable] = useState(false); return <div className={`brand ${light ? 'brand-light' : ''}`}>{logoUnavailable ? <span className="brand-mark brand-mark-placeholder" aria-hidden="true">G</span> : <img className="brand-logo" src="/images/gndu-logo.jpeg" alt="Guru Nanak Dev University logo" onError={() => setLogoUnavailable(true)} />}<span><strong>{name}</strong><small>Guru Nanak Dev University</small></span></div> }
 export function PageHeader({ eyebrow, title, description, action }) { return <div className="page-header"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1>{description && <p>{description}</p>}</div>{action}</div> }
 export function EmptyState({ title = 'Nothing here yet', children }) { return <div className="empty"><Icon name="file" size={26}/><h3>{title}</h3><p>{children}</p></div> }
 export function DemoBanner() { return <div className="demo-banner"><Icon name="info" size={17}/> Demo workspace — all academic data is illustrative, not an official university record.</div> }
